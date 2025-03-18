@@ -1,0 +1,48 @@
+{
+  "name": "asociacion-fleteros-necochea",
+  "version": "1.0.0",
+  "description": "Aplicación para gestionar el padrón de asociados de la Asociación de Fleteros de Necochea",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "publish": "electron-builder -p always"
+  },
+  "author": "Pablorelojero",
+  "license": "MIT",
+  "dependencies": {
+    "bootstrap": "^5.3.0",
+    "electron-log": "^5.1.0",
+    "electron-store": "^10.0.1",
+    "electron-updater": "^6.1.7",
+    "jquery": "^3.6.0",
+    "popper.js": "^1.16.1"
+  },
+  "devDependencies": {
+    "electron": "^25.0.0",
+    "electron-builder": "^24.3.0"
+  },
+  "build": {
+    "appId": "com.pablorelojero.fleteros",
+    "productName": "Asociación Fleteros Necochea",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": ["nsis"],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "runAfterFinish": true
+    },
+    "publish": [{
+      "provider": "github",
+      "owner": "pablorelojerodeveloper",
+      "repo": "asociacion-fleteros-necochea"
+    }]
+  }
+}

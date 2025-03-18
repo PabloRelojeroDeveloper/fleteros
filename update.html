@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Actualizando</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      user-select: none;
+    }
+    
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    h2 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 2s linear infinite;
+      margin: 20px 0;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    
+    .primary-btn {
+      background-color: #3498db;
+      color: white;
+    }
+    
+    .primary-btn:hover {
+      background-color: #2980b9;
+    }
+    
+    .secondary-btn {
+      background-color: #e0e0e0;
+      color: #333;
+    }
+    
+    .secondary-btn:hover {
+      background-color: #cccccc;
+    }
+    
+    #progress-container {
+      width: 100%;
+      max-width: 300px;
+      margin-top: 10px;
+      display: none;
+    }
+    
+    #progress-bar {
+      height: 10px;
+      background-color: #3498db;
+      width: 0%;
+      border-radius: 5px;
+      transition: width 0.3s;
+    }
+    
+    #progress-text {
+      margin-top: 5px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="checking">
+      <h2>Buscando actualizaciones</h2>
+      <div class="loader"></div>
+      <p>Verificando si hay versiones nuevas disponibles...</p>
+    </div>
+    
+    <div id="update-available" style="display: none;">
+      <h2>¡Actualización disponible!</h2>
+      <p>Se ha encontrado una nueva versión. ¿Deseas actualizar ahora?</p>
+      <div class="buttons">
+        <button class="primary-btn" id="start-update-btn">Actualizar</button>
+        <button class="secondary-btn" id="skip-update-btn">Continuar sin actualizar</button>
+      </div>
+    </div>
+    
+    <div id="no-update" style="display: none;">
+      <h2>No hay actualizaciones</h2>
+      <p>Ya tienes la última versión instalada.</p>
+      <p>Iniciando la aplicación...</p>
+    </div>
+    
+    <div id="downloading" style="display: none;">
+      <h2>Descargando actualización</h2>
+      <div class="loader"></div>
+      <p>Por favor espera mientras se descarga la actualización...</p>
+      <div id="progress-container">
+        <div id="progress-bar"></div>
+        <div id="progress-text">0%</div>
+      </div>
+    </div>
+    
+    <div id="update-downloaded" style="display: none;">
+      <h2>¡Actualización lista!</h2>
+      <p>La actualización se ha descargado y se instalará automáticamente...</p>
+    </div>
+    
+    <div id="error" style="display: none;">
+      <h2>Error en la actualización</h2>
+      <p id="error-message">Ocurrió un error al buscar actualizaciones.</p>
+      <p>Iniciando la aplicación sin actualizar...</p>
+    </div>
+  </div>
+  
+  <script>
+    // Elementos DOM
+    const checking = document.getElementById('checking');
+    const updateAvailable = document.getElementById('update-available');
+    const noUpdate = document.getElementById('no-update');
+    const downloading = document.getElementById('downloading');
+    const updateDownloaded = document.getElementById('update-downloaded');
+    const errorDiv = document.getElementById('error');
+    const errorMessage = document.getElementById('error-message');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const progressContainer = document.getElementById('progress-container');
+    
+    // Botones
+    const startUpdateBtn = document.getElementById('start-update-btn');
+    const skipUpdateBtn = document.getElementById('skip-update-btn');
+    
+    // Esconder todos los elementos
+    function hideAll() {
+      checking.style.display = 'none';
+      updateAvailable.style.display = 'none';
+      noUpdate.style.display = 'none';
+      downloading.style.display = 'none';
+      updateDownloaded.style.display = 'none';
+      errorDiv.style.display = 'none';
+    }
+    
+    // Evento para iniciar actualización
+    startUpdateBtn.addEventListener('click', () => {
+      window.electronAPI.startUpdate();
+      hideAll();
+      downloading.style.display = 'block';
+      progressContainer.style.display = 'block';
+    });
+    
+    // Evento para omitir actualización
+    skipUpdateBtn.addEventListener('click', () => {
+      window.electronAPI.skipUpdate();
+    });
+    
+    // Eventos IPC
+    window.electronAPI.onCheckingForUpdate(() => {
+      hideAll();
+      checking.style.display = 'block';
+    });
+    
+    window.electronAPI.onUpdateAvailable(() => {
+      hideAll();
+      updateAvailable.style.display = 'block';
+    });
+    
+    window.electronAPI.onUpdateNotAvailable(() => {
+      hideAll();
+      noUpdate.style.display = 'block';
+    });
+    
+    window.electronAPI.onDownloadProgress((progressObj) => {
+      hideAll();
+      downloading.style.display = 'block';
+      progressContainer.style.display = 'block';
+      
+      const percent = Math.floor(progressObj.percent);
+      progressBar.style.width = `${percent}%`;
+      progressText.textContent = `${percent}% (${formatBytes(progressObj.transferred)} de ${formatBytes(progressObj.total)})`;
+    });
+    
+    window.electronAPI.onUpdateDownloaded(() => {
+      hideAll();
+      updateDownloaded.style.display = 'block';
+    });
+    
+    window.electronAPI.onError((error) => {
+      hideAll();
+      errorDiv.style.display = 'block';
+      errorMessage.textContent = `Error: ${error.message || 'Desconocido'}`;
+    });
+    
+    // Función para formatear bytes
+    function formatBytes(bytes, decimals = 2) {
+      if (bytes === 0) return '0 Bytes';
+      
+      const k = 1024;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+      
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+  </script>
+</body>
+</html>
