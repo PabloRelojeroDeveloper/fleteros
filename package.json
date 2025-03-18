@@ -1,6 +1,6 @@
 {
   "name": "asociacion-fleteros-necochea",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Aplicación para gestionar el padrón de asociados de la Asociación de Fleteros de Necochea",
   "main": "main.js",
   "scripts": {
@@ -42,7 +42,7 @@
     "publish": [{
       "provider": "github",
       "owner": "pablorelojerodeveloper",
-      "repo": "asociacion-fleteros-necochea"
+      "repo": "fleteros"
     }]
   }
 }
