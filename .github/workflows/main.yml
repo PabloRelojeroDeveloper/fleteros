@@ -33,7 +33,6 @@ jobs:
           $COMMIT_COUNT = (git rev-list --count HEAD)
           
           # Crear una versión con formato semántico válido: X.Y.Z
-          # Incrementamos el número de versión patch (Z) basado en el número de commits
           $MAJOR = $VERSION_PARTS[0]
           $MINOR = $VERSION_PARTS[1]
           $PATCH = [int]$COMMIT_COUNT
@@ -51,7 +50,7 @@ jobs:
         shell: pwsh
       
       - name: Build app for Windows
-        run: npm run build
+        run: npx electron-builder --win --x64 --publish never  # El flag "--publish never" desactiva la publicación
       
       - name: Create Release
         id: create_release
