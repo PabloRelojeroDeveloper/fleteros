@@ -26,21 +26,28 @@ jobs:
         id: generate_version
         run: |
           # Obtener la versión base desde package.json
-          $BASE_VERSION = (Get-Content -Raw -Path package.json | ConvertFrom-Json).version
+          $PACKAGE_JSON = Get-Content -Raw -Path package.json | ConvertFrom-Json
+          $VERSION_PARTS = $PACKAGE_JSON.version -split '\.'
           
-          # Obtener el número de commits en la rama actual para usarlo como número de compilación
+          # Obtener el número de commits en la rama actual
           $COMMIT_COUNT = (git rev-list --count HEAD)
           
-          # Crear una versión con formato: BASE_VERSION.COMMIT_COUNT
-          $VERSION = "$BASE_VERSION.$COMMIT_COUNT"
+          # Crear una versión con formato semántico válido: X.Y.Z
+          # Incrementamos el número de versión patch (Z) basado en el número de commits
+          $MAJOR = $VERSION_PARTS[0]
+          $MINOR = $VERSION_PARTS[1]
+          $PATCH = [int]$COMMIT_COUNT
+          
+          $NEW_VERSION = "$MAJOR.$MINOR.$PATCH"
           
           # Guardar la versión para usarla en los siguientes pasos
-          echo "VERSION=$VERSION" >> $env:GITHUB_OUTPUT
+          echo "VERSION=$NEW_VERSION" >> $env:GITHUB_OUTPUT
           
           # Actualizar la versión en package.json
-          $PACKAGE_JSON = Get-Content -Raw -Path package.json | ConvertFrom-Json
-          $PACKAGE_JSON.version = $VERSION
+          $PACKAGE_JSON.version = $NEW_VERSION
           $PACKAGE_JSON | ConvertTo-Json -Depth 100 | Set-Content package.json
+          
+          Write-Host "Nueva versión generada: $NEW_VERSION"
         shell: pwsh
       
       - name: Build app for Windows
