@@ -2,39 +2,17 @@ name: Build and Release Fleteros
 
 on:
   push:
-    tags:
-      - 'v*' 
+    branches:
+      - main  # Se activará con cualquier push a la rama main
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      version: ${{ steps.get_version.outputs.VERSION }}
+  build-and-release:
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Get version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
         with:
-          name: Release ${{ steps.get_version.outputs.VERSION }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-
-  build-windows:
-    needs: create-release
-    runs-on: windows-latest
-    
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v3
+          fetch-depth: 0  # Necesario para obtener todo el historial de commits para el versionado
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -44,12 +22,39 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate version number
+        id: generate_version
+        run: |
+          # Obtener la versión base desde package.json
+          $BASE_VERSION = (Get-Content -Raw -Path package.json | ConvertFrom-Json).version
+          
+          # Obtener el número de commits en la rama actual para usarlo como número de compilación
+          $COMMIT_COUNT = (git rev-list --count HEAD)
+          
+          # Crear una versión con formato: BASE_VERSION.COMMIT_COUNT
+          $VERSION = "$BASE_VERSION.$COMMIT_COUNT"
+          
+          # Guardar la versión para usarla en los siguientes pasos
+          echo "VERSION=$VERSION" >> $env:GITHUB_OUTPUT
+          
+          # Actualizar la versión en package.json
+          $PACKAGE_JSON = Get-Content -Raw -Path package.json | ConvertFrom-Json
+          $PACKAGE_JSON.version = $VERSION
+          $PACKAGE_JSON | ConvertTo-Json -Depth 100 | Set-Content package.json
+        shell: pwsh
+      
       - name: Build app for Windows
         run: npm run build
-        
-      - name: Upload release assets
+      
+      - name: Create Release
+        id: create_release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ steps.generate_version.outputs.VERSION }}
+          name: Release v${{ steps.generate_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
           files: |
             dist/*.exe
             dist/latest.yml
