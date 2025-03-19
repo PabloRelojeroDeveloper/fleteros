@@ -2,7 +2,7 @@ name: Build and Release
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ] # Se activa solo cuando hay un tag que empuje a la rama 'main'
 
 jobs:
   create-release:
@@ -19,17 +19,17 @@ jobs:
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${ 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 }
         with:
           tag_name: ${{ github.ref_name }}
           release_name: Release ${{ steps.get_version.outputs.VERSION }}
           draft: false
           prerelease: false
-          
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Usando el token automáticamente proporcionado por GitHub Actions
+
   build:
     needs: create-release
-    if: startsWith(github.ref, 'refs/tags/') 
+    if: startsWith(github.ref, 'refs/tags/')  # Solo construye si se empujó un tag
     runs-on: ${{ matrix.os }}
     
     strategy:
@@ -47,17 +47,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        shell: bash
 
       - name: Build and publish
+        run: GH_TOKEN=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 npm run publish  # Aquí pones tu token directamente en el comando
         env:
-          GH_TOKEN: ${ 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 }
-        run: npm run publish
-        shell: bash
+          GH_TOKEN: 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  # También lo puedes pasar como variable de entorno
 
   build-on-push:
     runs-on: windows-latest
-    if: "!startsWith(github.ref, 'refs/tags/')"
+    if: "!startsWith(github.ref, 'refs/tags/')"  # Solo ejecuta esto cuando no es un tag
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
