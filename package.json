@@ -1,6 +1,6 @@
 {
   "name": "asociacion-fleteros-necochea",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Aplicación para gestionar el padrón de asociados de la Asociación de Fleteros de Necochea",
   "main": "main.js",
   "scripts": {
